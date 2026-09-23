@@ -37,6 +37,11 @@ Deep Interview implements Socratic questioning with mathematical ambiguity scori
 7. **No Mutation Before Approval**: Never edit source code, execute destructive commands, or commit changes during the interview.
 8. **Artifact Discipline**: Save final specifications to `.dip/specs/deep-interview-{slug}.md`. Store state in `.dip/state/` if needed.
 9. **User Language Match**: Conduct user-facing dialogue and questions in the language used by the user (defaulting to Japanese if addressed in Japanese), maintaining natural and professional phrasing.
+10. **Subagent Delegation Architecture (Mandatory Separation of Exploration & Analysis)**:
+    - **Lead Agent Orchestration**: Interactive UI modals (`ask_question`) are handled exclusively by the Lead agent in the main chat session.
+    - **Explore Subagent ([`agents/dip-explore.md`](../../agents/dip-explore.md))**: In Phase 1 and brownfield investigations, dispatch `dip-explore` subagents via `invoke_subagent(TypeName: "research", Role: "Codebase Explorer", Model: "flash")` to inspect existing code patterns, dependencies, and prior specs before designing questions. In Frontier mode, dispatch `dip-explore` to resolve environmental facts without asking the user.
+    - **Analyst Subagent ([`agents/dip-analyst.md`](../../agents/dip-analyst.md))**: In Phase 2, leverage `dip-analyst` (`invoke_subagent(TypeName: "research", Role: "Requirements Analyst", Model: "pro")`) to identify missing questions, undefined guardrails, scope creep risks, and unvalidated assumptions, sharpening Socratic questions and calculating dimensional clarity gaps.
+    - **Critic Subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md))**: On Round 3+ Challenge Perspectives (Skeptic / Contrarian), dispatch `dip-critic` (`invoke_subagent(TypeName: "research", Role: "Skeptic Critic", Model: "pro")`) to execute pre-mortems, test fragile assumptions, and challenge architectural orthodoxies before spec crystallization.
 </Execution_Policy>
 
 ## Ambiguity Scoring Dimensions
@@ -71,12 +76,11 @@ $$\text{Ambiguity} = 1.0 - \text{Clarity}$$
 ### Phase 1: Context & Brownfield Analysis
 1. Inspect workspace to check if this is brownfield (existing code, git repository) or greenfield.
 2. If brownfield:
-   - Search relevant files, packages, and architecture patterns.
-   - Read any prior specifications in `.dip/specs/` or plans in `.dip/plans/`.
-   - Cite repository facts instead of asking user to explain existing code.
+   - Dispatch `explore` subagent via `invoke_subagent(TypeName: "research", Role: "Codebase Explorer", Model: "flash")` to search relevant files, packages, architecture patterns, and prior specs/plans in `.dip/specs/` or `.dip/plans/`.
+   - Incorporate findings into session context and cite repository facts directly instead of asking user to explain existing code.
 
 ### Round 0: Topology Enumeration Gate
-1. Extract 1 to 6 top-level components or workstreams from the initial request and codebase context.
+1. Extract 1 to 6 top-level components or workstreams from the initial request and codebase context (informed by `explore` findings).
 2. Present the candidate components to the user using `ask_question`:
    - "I identified {N} top-level components: [List]. Does this topology accurately capture the scope? Should anything be added, merged, or deferred?"
 3. Lock the confirmed components into the session scope.
@@ -84,7 +88,7 @@ $$\text{Ambiguity} = 1.0 - \text{Clarity}$$
 ### Phase 2: Socratic Interview Loop
 Repeat until $\text{Ambiguity} \le \text{Threshold}$ or user explicitly exits:
 1. Identify the **weakest dimension** ($C_d$ with lowest score or largest information gap).
-2. Formulate 1 targeted question to resolve the biggest uncertainty in that dimension.
+2. Formulate 1 targeted question to resolve the biggest uncertainty in that dimension. Optionally consult `analyst` subagent (`invoke_subagent(TypeName: "research", Role: "Requirements Analyst", Model: "pro")`) to extract unvalidated assumptions and testable acceptance criteria.
 3. Present the question using `ask_question` with recommended options and direct response format.
 4. Update clarity scores for each dimension upon receiving the response.
 5. Display current ambiguity score and remaining gap:
@@ -93,13 +97,14 @@ Repeat until $\text{Ambiguity} \le \text{Threshold}$ or user explicitly exits:
    ```
 
 #### Challenge Perspectives (Active on specific rounds):
-- **Round 3+**: *Skeptic* - Challenge assumptions regarding performance bottlenecks, edge case failures, or user error.
+- **Round 3+**: *Skeptic* - Dispatch `critic` subagent (`invoke_subagent(TypeName: "research", Role: "Skeptic Critic", Model: "pro")`) to challenge assumptions regarding performance bottlenecks, edge case failures, or user error via pre-mortem inquiry.
 - **Round 5+**: *Minimalist* - Challenge whether components can be simplified, scoped down, or deferred.
 
 #### Frontier Mode (`--frontier`):
 If `--frontier` is active:
 - Map dependencies as a design decision tree.
 - Batch up to 4 non-dependent questions currently on the decision frontier per round using `ask_question`.
+- When a frontier question requires environmental facts, dispatch `dip-explore` subagent ([`agents/dip-explore.md`](../../agents/dip-explore.md)) rather than querying the user.
 
 ### Phase 3: Crystallize Specification
 When $\text{Ambiguity} \le \text{Threshold}$:

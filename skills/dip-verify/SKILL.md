@@ -27,6 +27,10 @@ level: 4
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Self-Validation)**:
    - Verification runs and automated remediation **MUST** be performed by dedicated QA subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
+   - Test execution adheres to [`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md).
+   - Test strategy gaps or missing tests are designed via `dip-test-engineer` ([`agents/dip-test-engineer.md`](../../agents/dip-test-engineer.md)).
+   - Failure analysis and root-cause remediation leverage `dip-debugger` ([`agents/dip-debugger.md`](../../agents/dip-debugger.md)).
+   - Final acceptance criteria sign-off is audited via `dip-verifier` ([`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
    - Primary agent coordinates execution cycles and monitors guardrails.
 2. **Deterministic Verification Sequence**:
    1. Build / Compilation check
@@ -35,12 +39,12 @@ level: 4
    4. Newly introduced feature tests
 3. **Bounded Remediation Loop**:
    - Up to 5 QA cycles allowed by default (`maxQaCycles = 5`).
-   - If tests fail, the QA subagent diagnoses the root cause, applies a minimal targeted fix, and re-runs tests.
+   - If tests fail, the QA subagent diagnoses the root cause (using `dip-debugger`), applies a minimal targeted fix, and re-runs tests.
 4. **Escalation & Stop Condition**:
    - **Identical Error Guard**: If the exact same failure persists across 3 consecutive cycles, **STOP IMMEDIATELY**. Report the fundamental blocker to the user with full diagnostic evidence.
    - If 5 cycles are exhausted without full pass, stop and prompt user.
 5. **No Claims Without Evidence**:
-   - A task is NEVER declared complete without fresh command output proving successful test and build execution.
+   - A task is NEVER declared complete without fresh command output proving successful test and build execution verified by `dip-verifier`.
 </Execution_Policy>
 
 ---

@@ -36,8 +36,10 @@ Deep Plan triggers iterative, consensus-driven architecture and implementation p
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Self-Agreement)**:
    - Self-agreement or persona play within the primary agent context is **strictly prohibited**.
-   - The primary agent acts as **Planner**.
-   - The **Architect** and **Critic** roles **MUST** be dispatched as independent, isolated subagents using `invoke_subagent` (`Model: "pro"` recommended).
+   - The primary agent acts as **Planner** (following [`agents/dip-planner.md`](../../agents/dip-planner.md)).
+   - Codebase facts and existing architecture are investigated via `dip-explore` subagent ([`agents/dip-explore.md`](../../agents/dip-explore.md)).
+   - External library/API specifications are looked up via `dip-document-specialist` ([`agents/dip-document-specialist.md`](../../agents/dip-document-specialist.md)).
+   - The **Architect** ([`agents/dip-architect.md`](../../agents/dip-architect.md)) and **Critic** ([`agents/dip-critic.md`](../../agents/dip-critic.md)) roles **MUST** be dispatched as independent, isolated subagents using `invoke_subagent` (`Model: "pro"` recommended).
    - Consensus requires explicit approval from both external subagents. The primary agent must never approve its own draft on behalf of the Architect or Critic.
 2. **RALPLAN-DR Framework**:
    - **R**equirements & Principles (3-5 overarching engineering tenets)

@@ -35,10 +35,11 @@ level: 4
    - **Phases 1 - 4: Mandatory Subagent Separation (Strictly No Self-Agreement)**:
      - Once the specification is established, self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
      - Every subsequent phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`:
-       - **Planning (Phase 1)**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
-       - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
-       - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
-       - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
+       - **Expansion (Phase 0)**: Lead + [`dip-explore`](../../agents/dip-explore.md) + [`dip-analyst`](../../agents/dip-analyst.md) + [`dip-critic`](../../agents/dip-critic.md).
+       - **Planning (Phase 1)**: Planner (Lead / [`agents/dip-planner.md`](../../agents/dip-planner.md)) + Architect subagent ([`agents/dip-architect.md`](../../agents/dip-architect.md)) + Critic subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md)) (`dip:deep-plan`).
+       - **Execution (Phase 2)**: Dispatched Code Executor subagents ([`agents/dip-executor.md`](../../agents/dip-executor.md)) + [`dip-code-simplifier`](../../agents/dip-code-simplifier.md) + [`dip-git-master`](../../agents/dip-git-master.md) (`dip:execute`).
+       - **QA (Phase 3)**: Dispatched QA Engineer subagent ([`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md)) + [`dip-debugger`](../../agents/dip-debugger.md) + [`dip-verifier`](../../agents/dip-verifier.md) (`dip:verify`).
+       - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect ([`agents/dip-architect.md`](../../agents/dip-architect.md)), Security ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md)), Code ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md)) (`dip:review`).
 2. **Skill Resolution Protocol (Discovery Order)**:
    - When loading runbooks for any phase via `view_file`, resolve paths in the following priority order:
      1. Exact path listed in system prompt `Available skills` (highest priority)

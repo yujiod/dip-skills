@@ -28,8 +28,10 @@ level: 4
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Direct In-Place Implementation)**:
    - Primary agent acts as orchestrator / team lead.
-   - Code mutations **MUST** be delegated to isolated executor subagents using `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`).
+   - Code mutations **MUST** be delegated to isolated executor subagents using `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`) adhering to [`agents/dip-executor.md`](../../agents/dip-executor.md).
    - The primary agent must never mutate source files directly when running `dip:execute`; all mutations are made by dispatched executor subagents.
+   - Code refinement, nesting elimination, and anti-slop cleaning may be dispatched to `dip-code-simplifier` ([`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)).
+   - Version control operations and clean commit splitting are managed via `dip-git-master` ([`agents/dip-git-master.md`](../../agents/dip-git-master.md)).
 2. **Phase-by-Phase Discipline**:
    - Deconstruct the plan into bounded, atomic milestones.
    - Independent work units may be dispatched to multiple parallel executor subagents (`--parallel`).

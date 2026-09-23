@@ -30,9 +30,10 @@ level: 4
    - Self-review within the lead or executor context is **strictly prohibited**.
    - The primary agent coordinates reviews and aggregates verdicts.
    - Three independent subagents **MUST** be launched in parallel via `invoke_subagent` (`Model: "pro"`):
-     - **Architect Reviewer**: Verifies functional completeness, design adherence, and boundaries.
-     - **Security Reviewer**: Verifies vulnerabilities, authentication, authorization, injection, and secrets.
-     - **Code Reviewer**: Verifies cleanliness, maintainability, tests, and removes AI slop/redundancy.
+     - **Architect Reviewer** ([`agents/dip-architect.md`](../../agents/dip-architect.md)): Verifies functional completeness, design adherence, and boundaries.
+     - **Security Reviewer** ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md)): Verifies vulnerabilities, authentication, authorization, injection, and secrets.
+     - **Code Reviewer** ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md)): Verifies cleanliness, maintainability, tests, and removes AI slop/redundancy.
+     - (Remediation): Targeted simplification uses `dip-code-simplifier` ([`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)) and final evidence audit uses `dip-verifier` ([`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
 2. **Unanimous Consensus Gate (All Must Approve)**:
    - Every reviewer must explicitly issue `APPROVE` before code is accepted.
    - Any `REQUEST_CHANGES` verdict blocks completion.
