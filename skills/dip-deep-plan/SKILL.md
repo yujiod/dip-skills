@@ -34,15 +34,17 @@ Deep Plan triggers iterative, consensus-driven architecture and implementation p
 </Planning_Execution_Boundary>
 
 <Execution_Policy>
-1. **Mandatory Subagent Separation (Strictly No Self-Agreement)**:
-   - Self-agreement or persona play within the primary agent context is **strictly prohibited**.
-   - The primary agent acts as **Planner** (following [`agents/dip-planner.md`](../../agents/dip-planner.md)).
+1. **Mandatory Subagent Separation (Strictly No Self-Agreement & Full Tri-Agent Separation)**:
+   - Self-agreement, self-drafting, or persona play within the primary agent context is **strictly prohibited**.
+   - The primary agent acts as **Orchestrator / Facilitator** and does NOT draft or mutate plans directly.
+   - Plan drafting and plan revisions **MUST** be delegated to the **Planner** subagent via `invoke_subagent` using [`agents/dip-planner.md`](../../agents/dip-planner.md):
+     - `TypeName: "dip-planner"`, `Role: "Work Planner"`, `Model: "pro"`
    - Codebase facts and existing architecture are investigated via `dip-explore` subagent via `invoke_subagent(TypeName: "dip-explore", Role: "Codebase Explorer", Model: "flash")` ([`agents/dip-explore.md`](../../agents/dip-explore.md)).
    - External library/API specifications are looked up via `dip-document-specialist` via `invoke_subagent(TypeName: "dip-document-specialist", Role: "Doc Specialist", Model: "flash")` ([`agents/dip-document-specialist.md`](../../agents/dip-document-specialist.md)).
    - The **Architect** ([`agents/dip-architect.md`](../../agents/dip-architect.md)) and **Critic** ([`agents/dip-critic.md`](../../agents/dip-critic.md)) roles **MUST** be dispatched as independent, isolated subagents using `invoke_subagent`:
      - Architect: `TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`
      - Critic: `TypeName: "dip-critic"`, `Role: "Critical Reviewer"`, `Model: "pro"`
-   - Consensus requires explicit approval from both external subagents. The primary agent must never approve its own draft on behalf of the Architect or Critic.
+   - Consensus requires explicit approval from both Architect and Critic subagents on the plan produced and maintained by Planner. The primary agent must never draft, revise, or approve plans on behalf of any subagent.
 2. **RALPLAN-DR Framework**:
    - **R**equirements & Principles (3-5 overarching engineering tenets)
    - **A**lternatives & Options (>=2 viable options analyzed with explicit trade-offs)
@@ -69,38 +71,44 @@ Deep Plan triggers iterative, consensus-driven architecture and implementation p
 [Input Spec / Task]
         │
         v
-   [1. Planner]  ──────> Generates Draft Plan & RALPLAN-DR Summary
-        │
-        ├─────────────────── [Optional: User Feedback if --interactive]
+   [1. Dispatch Planner] ────> invoke_subagent(TypeName="dip-planner", Role="Work Planner")
+        │                      Generates Draft Plan & RALPLAN-DR Summary (.dip/plans/plan-{slug}.md)
+        ├──────────────────── [Optional: User Feedback if --interactive]
         │
         v
-   [2. Architect] ─────> Evaluates Architectural Soundness & Tradeoffs
-        │                (Steelman antithesis, tension, synthesis)
+   [2. Dispatch Architect] ──> invoke_subagent(TypeName="dip-architect", Role="System Architect")
+        │                      Evaluates Architectural Soundness & Tradeoffs (Steelman antithesis)
         v
-   [3. Critic] ────────> Evaluates Principle Consistency & Failure Modes
-        │                (Enforces testability, risk mitigation, acceptance criteria)
+   [3. Dispatch Critic] ─────> invoke_subagent(TypeName="dip-critic", Role="Critical Reviewer")
+        │                      Evaluates Principle Consistency & Failure Modes
         │
         ├─ Consensus Reached?
-        │    ├─ No  ───> [Refinement Loop: Return to Planner with feedback (Max 3 rounds)]
-        │    └─ Yes ───> [Proceed to Step 4]
+        │    ├─ No  ───> [Refinement Loop: Dispatch dip-planner with feedback (Max 3 rounds)]
+        │    └─ Yes ───> [Proceed to Step 5]
         v
-   [4. Final Plan Artifact] ───> Write to `.dip/plans/plan-{slug}.md` (Pending Approval)
+   [4. Final Plan Artifact] ──> .dip/plans/plan-{slug}.md (Status: PENDING APPROVAL)
         │
         v
    [5. Explicit Approval Prompt]
 ```
 
-### Step 1: Planner Draft
-The Planner inspects workspace context (and `.dip/specs/` if available) and formulates the initial draft plan along with a compact **RALPLAN-DR summary**:
-1. **Core Principles**: 3 to 5 non-negotiable architectural principles governing this change.
-2. **Decision Drivers**: Top 3 engineering drivers (e.g., latency, backward compatibility, simplicity).
-3. **Viable Options**: At least 2 distinct technical options with bounded pros and cons. If only 1 option is selected, provide explicit justification invalidating alternatives.
-4. **Implementation Breakdown**: Phased breakdown of work with file-level targets.
-5. *(If `--deliberate`)*: Pre-mortem scenarios and expanded test matrix.
+### Step 1: Dispatch Planner Draft (`invoke_subagent`)
+The primary agent dispatches the **Planner** via `invoke_subagent`:
+- `TypeName`: `"dip-planner"`
+- `Role`: `"Work Planner"`
+- `Model`: `"pro"`
+- `Prompt`: Provide input specification (from `.dip/specs/` or user input), context, target flags (`--deliberate`), and target output path (`.dip/plans/plan-{slug}.md`). Instruct Planner to inspect workspace context and formulate the initial draft plan along with a compact **RALPLAN-DR summary**:
+  1. **Core Principles**: 3 to 5 non-negotiable architectural principles governing this change.
+  2. **Decision Drivers**: Top 3 engineering drivers (e.g., latency, backward compatibility, simplicity).
+  3. **Viable Options**: At least 2 distinct technical options with bounded pros and cons. If only 1 option is selected, provide explicit justification invalidating alternatives.
+  4. **Implementation Breakdown**: Phased breakdown of work with file-level targets.
+  5. *(If `--deliberate`)*: Pre-mortem scenarios and expanded test matrix.
+  The Planner writes the initial draft to `.dip/plans/plan-{slug}.md` and returns the RALPLAN-DR summary.
 
 ### Step 2: User Checkpoint (Interactive Mode Only)
 If `--interactive` is enabled, present the draft plan and RALPLAN-DR summary to the user using `ask_question`:
 - Options: `Proceed to review`, `Request adjustments`, `Cancel`.
+- If user requests adjustments: dispatch `dip-planner` (`Role: "Work Planner Refinement"`) with user feedback to revise `.dip/plans/plan-{slug}.md` before proceeding to review.
 
 ### Step 3: Architect Review (Dispatched Subagent)
 Launch the Architect using `invoke_subagent` (`TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`).
@@ -120,12 +128,20 @@ The Critic acts as the gatekeeper of completeness and risk mitigation:
 - *(In deliberate mode)*: Reject any plan lacking thorough pre-mortem failure scenarios or test coverage.
 - Returns explicit verdict: `APPROVE` or `REQUEST_CHANGES` with actionable reasons.
 
-### Consensus & Iteration Gate
-- If Architect and Critic provide approvals or minor remarks, consensus is reached.
-- If major blockers or rejection criteria are found, loop back to Step 1 for up to 3 refinement rounds.
+### Consensus & Iteration Gate (Planner Refinement Loop)
+- If Architect and Critic provide approvals or minor remarks, consensus is reached. Proceed to Step 5.
+- If major blockers, rejection criteria, or `REQUEST_CHANGES` are returned by either Architect or Critic:
+  - Do NOT modify the plan directly in the primary agent.
+  - Forward the Architect and Critic feedback to the **Planner** via `invoke_subagent`:
+    - `TypeName`: `"dip-planner"`
+    - `Role`: `"Work Planner Refinement"`
+    - `Model`: `"pro"`
+    - `Prompt`: Include the current plan path, Architect review findings, and Critic review findings. Instruct Planner to revise `.dip/plans/plan-{slug}.md` to address all critiques and update the RALPLAN-DR summary and ADR.
+  - Re-run Step 3 and Step 4 with the revised plan.
+  - Loop for up to 3 refinement rounds. If consensus fails after 3 rounds, halt and escalate unresolved tensions to the user.
 
 ### Step 5: Final Plan Output & Approval Gate
-1. Write the final agreed-upon plan to `.dip/plans/plan-{slug}.md`.
+1. The agreed-upon plan is finalized at `.dip/plans/plan-{slug}.md`.
 2. Plan Header must state:
    ```markdown
    # Implementation Plan: {Title}

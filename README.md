@@ -26,7 +26,7 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
         ├─► [Phase 0: 要件展開] ── dip:deep-interview (数学的曖昧度 <= 20%)
         │                          成果物: .dip/specs/deep-interview-{slug}.md
         │
-        ├─► [Phase 1: 計画審議] ── dip:deep-plan (RALPLAN-DR: Architect & Critic サブエージェント合意)
+        ├─► [Phase 1: 計画審議] ── dip:deep-plan (RALPLAN-DR: Planner, Architect & Critic サブエージェント合意)
         │                          成果物: .dip/plans/plan-{slug}.md
         │                          [ユーザー明示承認ゲート]
         │
@@ -63,8 +63,8 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
 - **成果物**: `.dip/specs/deep-interview-{slug}.md`
 
 ### 3. `dip:deep-plan` (コンセンサスプランニング)
-- **目的**: 仕様書をもとに、Planner（親エージェント）、Architect（サブエージェント）、Critic（サブエージェント）による審議を行い合意形成します。
-- **自己合意の厳禁**: Architect と Critic は独立した `invoke_subagent` として起動され、両者の承認が得られるまで最大3ラウンドの審議ループを回します。
+- **目的**: 仕様書をもとに、Planner、Architect、Critic の独立したサブエージェントによる審議を行い合意形成します。
+- **自己合意の厳禁**: プランドラフト作成およびプラン修正は `dip-planner` サブエージェントに委譲され、Architect（`dip-architect`）および Critic（`dip-critic`）による多角レビューを経て全者の合意が得られるまで最大3ラウンドの審議ループを回します。
 - **成果物**: `.dip/plans/plan-{slug}.md`
 
 ### 4. `dip:execute` (実装実行)
@@ -134,7 +134,7 @@ agents/        # サブエージェント定義 (.md)
 | **`dip-explore`** | 読取専用 | 高速コードベース探索、Brownfield事前調査、環境事実の自律確認 | `dip:deep-interview`, `dip:deep-plan`, `dip:autopilot` |
 | **`dip-critic`** | 読取専用 | 批判的評価、Skeptic / Contrarian 視点、事前検死（Pre-Mortem）、前提脆弱性検証 | `dip:deep-interview`, `dip:deep-plan`, `dip:review` |
 | **`dip-architect`** | 読取専用 | アーキテクチャ健全性評価、対立仮説（Steelman）構築、トレードオフ分析 | `dip:deep-plan`, `dip:review`, `dip:autopilot` |
-| **`dip-planner`** | 読取専用 | 実行計画策定、タスク依存グラフ分解、RALPLAN-DRサマリー作成 | `dip:deep-plan`, `dip:autopilot` |
+| **`dip-planner`** | 計画策定 | 実行計画策定・改定、タスク依存グラフ分解、RALPLAN-DRサマリー作成 | `dip:deep-plan`, `dip:autopilot` |
 | **`dip-executor`** | 実装実行 | 最小差分（Smallest Viable Diff）によるアトミックなコード実装 | `dip:execute`, `dip:autopilot` |
 | **`dip-qa-tester`** | 動作検証 | 対話的CLI/サービス起動テスト、コマンド出力キャプチャ、動作エビデンス収集 | `dip:verify`, `dip:autopilot` |
 | **`dip-test-engineer`** | テスト作成 | テストピラミッド設計、カバレッジギャップ補完、単体/結合/E2Eテスト実装 | `dip:verify` |

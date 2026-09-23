@@ -36,7 +36,7 @@ level: 4
      - Once the specification is established, self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
      - Every subsequent phase leverages dedicated, isolated subagents dispatched via `invoke_subagent` using the corresponding agent defined in `agents/`:
        - **Expansion (Phase 0)**: Lead + [`dip-explore`](../../agents/dip-explore.md) (`TypeName: "dip-explore"`) + [`dip-analyst`](../../agents/dip-analyst.md) (`TypeName: "dip-analyst"`) + [`dip-critic`](../../agents/dip-critic.md) (`TypeName: "dip-critic"`).
-       - **Planning (Phase 1)**: Planner (Lead / [`agents/dip-planner.md`](../../agents/dip-planner.md)) + Architect subagent ([`agents/dip-architect.md`](../../agents/dip-architect.md), `TypeName: "dip-architect"`) + Critic subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md), `TypeName: "dip-critic"`) (`dip:deep-plan`).
+       - **Planning (Phase 1)**: Dispatched Planner subagent ([`agents/dip-planner.md`](../../agents/dip-planner.md), `TypeName: "dip-planner"`) + Architect subagent ([`agents/dip-architect.md`](../../agents/dip-architect.md), `TypeName: "dip-architect"`) + Critic subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md), `TypeName: "dip-critic"`) (`dip:deep-plan`).
        - **Execution (Phase 2)**: Dispatched Code Executor subagents ([`agents/dip-executor.md`](../../agents/dip-executor.md), `TypeName: "dip-executor"`) + [`dip-code-simplifier`](../../agents/dip-code-simplifier.md) (`TypeName: "dip-code-simplifier"`) + [`dip-git-master`](../../agents/dip-git-master.md) (`TypeName: "dip-git-master"`) (`dip:execute`).
        - **QA (Phase 3)**: Dispatched QA Engineer subagent ([`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md), `TypeName: "dip-qa-tester"`) + [`dip-debugger`](../../agents/dip-debugger.md) (`TypeName: "dip-debugger"`) + [`dip-verifier`](../../agents/dip-verifier.md) (`TypeName: "dip-verifier"`) (`dip:verify`).
        - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect ([`agents/dip-architect.md`](../../agents/dip-architect.md), `TypeName: "dip-architect"`), Security ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md), `TypeName: "dip-security-reviewer"`), Code ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md), `TypeName: "dip-code-reviewer"`) (`dip:review`).
@@ -72,7 +72,7 @@ level: 4
    [Phase 0: Expansion] ─────────► dip:deep-interview (Socratic Q&A, Ambiguity <= 20%)
         │                          (Skipped if valid .dip/specs/ exists)
         v
-   [Phase 1: Planning] ──────────► dip:deep-plan (RALPLAN-DR Consensus: Architect & Critic)
+   [Phase 1: Planning] ──────────► dip:deep-plan (RALPLAN-DR Consensus: Planner, Architect & Critic)
         │                          (Skipped if valid .dip/plans/ exists)
         v
    [Explicit User Approval Gate]
@@ -117,9 +117,9 @@ level: 4
 - **Input Check**: Inspect `.dip/plans/` for an existing plan matching the spec.
 - If existing approved plan exists: skip directly to Phase 2.
 - Otherwise:
-  - Formulate draft plan with RALPLAN-DR framework.
+  - Dispatch Planner subagent (`TypeName: "dip-planner"`, `Role: "Work Planner"`, `Model: "pro"`) via `invoke_subagent` to formulate draft plan with RALPLAN-DR framework.
   - Dispatch Architect (`TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`) and Critic (`TypeName: "dip-critic"`, `Role: "Critical Reviewer"`, `Model: "pro"`) subagents via `invoke_subagent`.
-  - Iterate until unanimous consensus is recorded.
+  - If revisions are required, dispatch refinement back to `dip-planner` subagent until unanimous consensus is recorded.
   - Yields `.dip/plans/plan-{slug}.md` (`Status: PENDING APPROVAL`).
   - **Approval Gate**: Prompt user for explicit approval to begin execution.
 
