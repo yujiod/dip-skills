@@ -160,6 +160,9 @@ npx skills update
     "entries": [
       {
         "path": "skills"
+      },
+      {
+        "path": "~/.agents/skills"
       }
     ]
   }
@@ -169,6 +172,9 @@ npx skills update
   ```json
   {
     "entries": [
+      {
+        "path": "~/.agents/skills"
+      },
       {
         "path": "/path/to/dip-skills/skills"
       }

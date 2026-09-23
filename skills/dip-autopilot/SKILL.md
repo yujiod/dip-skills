@@ -39,17 +39,23 @@ level: 4
        - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
        - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
        - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
-2. **Phase Completion Gate**:
+2. **Skill Resolution Protocol (Discovery Order)**:
+   - When loading runbooks for any phase via `view_file`, resolve paths in the following priority order:
+     1. Exact path listed in system prompt `Available skills` (highest priority)
+     2. Global user installation: `~/.agents/skills/dip-<name>/SKILL.md`
+     3. Project installation: `.agents/skills/dip-<name>/SKILL.md`
+     4. Repository workspace: `skills/dip-<name>/SKILL.md` (or relative path `../dip-<name>/SKILL.md`)
+3. **Phase Completion Gate**:
    - Each phase must satisfy its verification gate before the next phase begins.
-3. **Hybrid Smart Progression & Strict Gating**:
+4. **Hybrid Smart Progression & Strict Gating**:
    - If an approved specification (`.dip/specs/deep-interview-*.md`) already exists in workspace, reuse it and jump to Phase 1.
    - If an approved consensus plan (`.dip/plans/plan-*.md`) already exists in workspace, skip Phase 0 & 1 and jump directly to Phase 2 (Execution).
    - **NO SELF-EXEMPTION (Zero-Skip Rule)**: The Lead agent is STRICTLY PROHIBITED from skipping `dip:deep-interview` by claiming the user's prompt is "already clear", "detailed", or "unambiguous". Every new request contains implicit assumptions. The Lead agent MUST execute `dip:deep-interview` to measure ambiguity and generate `.dip/specs/deep-interview-{slug}.md`.
-4. **Escalation & Stop Conditions**:
+5. **Escalation & Stop Conditions**:
    - Stop and report when the same QA error persists across 3 consecutive cycles.
    - Stop and report when validation fails across 3 re-validation rounds.
    - Stop immediately if the user requests cancellation.
-5. **State Discipline & Cleanup**:
+6. **State Discipline & Cleanup**:
    - Track session progress in `.dip/state/autopilot-state.json`.
    - On successful validation, remove temporary state files and present the final deliverables report to the user.
 </Execution_Policy>
@@ -91,7 +97,7 @@ level: 4
 - **Session Constraint**: Interactive UI modals (`ask_question`) can ONLY be presented by the interactive main chat session; background subagents cannot interact with the user. Therefore, the Lead agent directly executes the `dip:deep-interview` skill.
 - **Strict Execution Sequence (Zero-Shortcut Rule)**:
   Calling `ask_question` blindly without following the protocol is a **CRITICAL PROTOCOL VIOLATION**. The Lead agent MUST strictly follow this exact 4-step sequence:
-  1. **Step 1 - Skill Ingestion (Turn 1)**: Immediately read [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) using `view_file` (or use the exact path from system prompt `Available skills`).
+  1. **Step 1 - Skill Ingestion (Turn 1)**: Immediately read `dip:deep-interview` runbook using `view_file` (resolve path: Available skills -> `~/.agents/skills/dip-deep-interview/SKILL.md` -> `.agents/skills/dip-deep-interview/SKILL.md` -> `skills/dip-deep-interview/SKILL.md`).
   2. **Step 2 - Context & Brownfield Exploration**: Inspect workspace code, tests, and any prior `.dip/specs/` or `.dip/plans/`. Never question the user regarding existing code without checking it first.
   3. **Step 3 - Interview Announcement & Ambiguity Scoring**: Output visible text in the chat declaring:
      - Header: `### [Phase 0: dip:deep-interview] 要件展開開始`
@@ -106,7 +112,7 @@ level: 4
   - **Zero Self-Exemption**: Never judge the user prompt as "already clear" or "sufficiently detailed". Every request has unstated assumptions, boundaries, and acceptance criteria.
 
 ### Phase 1: Planning (`dip:deep-plan`)
-- **Runbook**: Read instructions using `view_file` on [skills/dip-deep-plan/SKILL.md](../dip-deep-plan/SKILL.md) (or use the exact path from system prompt `Available skills`).
+- **Runbook**: Read instructions using `view_file` on `dip:deep-plan` runbook (resolve path: Available skills -> `~/.agents/skills/dip-deep-plan/SKILL.md` -> `.agents/skills/dip-deep-plan/SKILL.md` -> `skills/dip-deep-plan/SKILL.md`).
 - **Input Check**: Inspect `.dip/plans/` for an existing plan matching the spec.
 - If existing approved plan exists: skip directly to Phase 2.
 - Otherwise:
@@ -117,21 +123,21 @@ level: 4
   - **Approval Gate**: Prompt user for explicit approval to begin execution.
 
 ### Phase 2: Execution (`dip:execute`)
-- **Runbook**: Read instructions using `view_file` on [skills/dip-execute/SKILL.md](../dip-execute/SKILL.md) (or use the exact path from system prompt `Available skills`).
+- **Runbook**: Read instructions using `view_file` on `dip:execute` runbook (resolve path: Available skills -> `~/.agents/skills/dip-execute/SKILL.md` -> `.agents/skills/dip-execute/SKILL.md` -> `skills/dip-execute/SKILL.md`).
 - Read approved `.dip/plans/plan-{slug}.md`.
 - Break plan into atomic work milestones.
 - Dispatch implementation tasks to isolated executor subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`).
 - Run independent components in parallel if `--parallel` is active.
 
 ### Phase 3: QA Cycling (`dip:verify`)
-- **Runbook**: Read instructions using `view_file` on [skills/dip-verify/SKILL.md](../dip-verify/SKILL.md) (or use the exact path from system prompt `Available skills`).
+- **Runbook**: Read instructions using `view_file` on `dip:verify` runbook (resolve path: Available skills -> `~/.agents/skills/dip-verify/SKILL.md` -> `.agents/skills/dip-verify/SKILL.md` -> `skills/dip-verify/SKILL.md`).
 - Dispatch QA Engineer subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
 - Run project build, lint, and test suites.
 - If failures occur: diagnose and apply targeted fixes (up to 5 cycles).
 - **Guardrail**: If the identical error signature occurs 3 times, abort and escalate to user.
 
 ### Phase 4: Validation (`dip:review`)
-- **Runbook**: Read instructions using `view_file` on [skills/dip-review/SKILL.md](../dip-review/SKILL.md) (or use the exact path from system prompt `Available skills`).
+- **Runbook**: Read instructions using `view_file` on `dip:review` runbook (resolve path: Available skills -> `~/.agents/skills/dip-review/SKILL.md` -> `.agents/skills/dip-review/SKILL.md` -> `skills/dip-review/SKILL.md`).
 - Dispatch 3 independent reviewer subagents in parallel via `invoke_subagent` (`Model: "pro"`):
   1. **Architect Reviewer**: Verifies plan compliance and interface boundaries.
   2. **Security Reviewer**: Verifies OWASP, credential safety, and data sanitization.
