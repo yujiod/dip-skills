@@ -26,20 +26,25 @@ level: 4
 </Do_Not_Use_When>
 
 <Execution_Policy>
-1. **Mandatory Subagent Separation (Strictly No Self-Agreement Across All Phases)**:
-   - Self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
-   - Every phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`.
-   - **Expansion (Phase 0 - MANDATORY)**: Dispatch Deep Interviewer subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "Deep Interviewer"`). The subagent executes the full `dip:deep-interview` skill runbook ([skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md)), conducts Socratic questioning, measures 4-dimension ambiguity, and yields `.dip/specs/deep-interview-{slug}.md`.
-   - **Planning (Phase 1)**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
-   - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
-   - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
-   - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
+1. **Lifecycle Architecture & Subagent Separation**:
+   - **Phase 0: Socratic Expansion (`dip:deep-interview`) - Lead Agent Skill Activation**:
+     - The interactive UI modal tool (`ask_question`) requires the interactive main chat session and **CANNOT be executed by background subagents**.
+     - Therefore, the **Lead agent MUST directly activate and execute the `dip:deep-interview` skill**.
+     - On Turn 1, the Lead agent MUST load [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) via `view_file` and execute its complete methodology: 4-dimension scoring, Socratic inquiry via `ask_question`, and specification artifact generation (`.dip/specs/deep-interview-{slug}.md`).
+     - Skipping `dip:deep-interview` is strictly prohibited.
+   - **Phases 1 - 4: Mandatory Subagent Separation (Strictly No Self-Agreement)**:
+     - Once the specification is established, self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
+     - Every subsequent phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`:
+       - **Planning (Phase 1)**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
+       - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
+       - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
+       - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
 2. **Phase Completion Gate**:
    - Each phase must satisfy its verification gate before the next phase begins.
 3. **Hybrid Smart Progression & Strict Gating**:
    - If an approved specification (`.dip/specs/deep-interview-*.md`) already exists in workspace, reuse it and jump to Phase 1.
    - If an approved consensus plan (`.dip/plans/plan-*.md`) already exists in workspace, skip Phase 0 & 1 and jump directly to Phase 2 (Execution).
-   - **NO SELF-EXEMPTION (Zero-Skip Rule)**: The Lead agent is STRICTLY PROHIBITED from skipping Phase 0 by claiming the user's prompt is "already clear", "detailed", or "unambiguous". Every new request contains implicit assumptions. The Deep Interviewer subagent MUST execute `dip:deep-interview` to measure ambiguity and generate `.dip/specs/deep-interview-{slug}.md`.
+   - **NO SELF-EXEMPTION (Zero-Skip Rule)**: The Lead agent is STRICTLY PROHIBITED from skipping `dip:deep-interview` by claiming the user's prompt is "already clear", "detailed", or "unambiguous". Every new request contains implicit assumptions. The Lead agent MUST execute `dip:deep-interview` to measure ambiguity and generate `.dip/specs/deep-interview-{slug}.md`.
 4. **Escalation & Stop Conditions**:
    - Stop and report when the same QA error persists across 3 consecutive cycles.
    - Stop and report when validation fails across 3 re-validation rounds.
@@ -82,19 +87,20 @@ level: 4
 
 ## Detailed Phases
 
-### Phase 0: Expansion (`dip:deep-interview`) - MANDATORY SUBAGENT GATE
-- **Runbook**: [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) (or use the exact path from system prompt `Available skills`).
-- **Execution Mode**: Dispatch dedicated `Deep Interviewer` subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "Deep Interviewer"`).
+### Phase 0: Expansion (`dip:deep-interview`) - MANDATORY LEAD ACTIVATION
+- **Session Constraint**: Interactive UI modals (`ask_question`) can ONLY be presented by the interactive main chat session; background subagents cannot interact with the user. Therefore, the Lead agent directly executes the `dip:deep-interview` skill.
+- **Skill Activation Protocol (Turn 1)**:
+  1. The Lead agent MUST immediately read [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) using `view_file` (or use the exact path from system prompt `Available skills`).
+  2. Strictly adhere to all procedures defined in `dip:deep-interview`:
+     - Inspect workspace codebase context first.
+     - Measure clarity and ambiguity across the 4 weighted dimensions ($W_{goal}=0.30$, $W_{constraints}=0.25$, $W_{criteria}=0.25$, $W_{context}=0.20$).
+     - Execute the Socratic inquiry loop using `ask_question` until Ambiguity $\le 20\%$ (or configured threshold).
+     - Generate and persist the formal specification artifact to `.dip/specs/deep-interview-{slug}.md`.
+  3. Present the confirmed specification and verify `.dip/specs/deep-interview-{slug}.md` is written before moving to Phase 1.
 - **Hard Gate Rule**:
   - ONLY skip Phase 0 if a valid, approved specification file (`.dip/specs/deep-interview-*.md`) already exists in workspace.
-  - OTHERWISE, Phase 0 is **STRICTLY MANDATORY**. Planning, dispatching implementation subagents, or editing code before Phase 0 completion is a **CRITICAL PROTOCOL VIOLATION**.
+  - Moving to Phase 1 (Planning) or Phase 2 (Execution) without completing `dip:deep-interview` and generating `.dip/specs/deep-interview-{slug}.md` is a **CRITICAL PROTOCOL VIOLATION**.
   - **Zero Self-Exemption**: Never judge the user prompt as "already clear" or "sufficiently detailed". Every request has unstated assumptions, boundaries, and acceptance criteria.
-- **Dispatch Action (Turn 1)**:
-  - Lead agent immediately dispatches the Deep Interviewer subagent:
-    - `TypeName`: `"self"`
-    - `Role`: `"Deep Interviewer"`
-    - `Prompt`: "Execute the dip:deep-interview skill for user request: '<task description>'. Read instructions using view_file on skills/dip-deep-interview/SKILL.md. Follow all protocols in dip:deep-interview: explore codebase, measure ambiguity across 4 dimensions, conduct Socratic inquiry via ask_question until Ambiguity <= 20%, generate .dip/specs/deep-interview-{slug}.md, and report the approved specification back."
-  - Wait for Deep Interviewer subagent completion and verify the presence of `.dip/specs/deep-interview-{slug}.md` before proceeding to Phase 1.
 
 ### Phase 1: Planning (`dip:deep-plan`)
 - **Runbook**: Read instructions using `view_file` on [skills/dip-deep-plan/SKILL.md](../dip-deep-plan/SKILL.md) (or use the exact path from system prompt `Available skills`).
