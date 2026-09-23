@@ -28,14 +28,15 @@ Deep Interview implements Socratic questioning with mathematical ambiguity scori
 </Do_Not_Use_When>
 
 <Execution_Policy>
-1. **Interactive Questioning**: Use Antigravity's `ask_question` tool whenever interactive clarification is needed. Format questions clearly with recommended options.
-2. **One Question at a Time**: Target the weakest clarity dimension in each round unless `--frontier` mode is explicitly requested.
-3. **Round 0 Topology Gate**: Enumerate and confirm top-level components before running depth-first inquiry.
-4. **Codebase Exploration First**: Use file viewing or search tools before asking questions about existing code (brownfield). Cite findings directly.
-5. **Mathematical Ambiguity Scoring**: Score clarity after every user answer and display ambiguity transparently.
-6. **No Mutation Before Approval**: Never edit source code, execute destructive commands, or commit changes during the interview.
-7. **Artifact Discipline**: Save final specifications to `.dip/specs/deep-interview-{slug}.md`. Store state in `.dip/state/` if needed.
-8. **User Language Match**: Conduct user-facing dialogue and questions in the language used by the user (defaulting to Japanese if addressed in Japanese), maintaining natural and professional phrasing.
+1. **No Cold Questions (Strict Sequence)**: Never invoke `ask_question` immediately on Turn 1 without prior codebase inspection and initial ambiguity score announcement.
+2. **Interactive Questioning**: Use Antigravity's `ask_question` tool whenever interactive clarification is needed. Format questions clearly with recommended options.
+3. **One Question at a Time**: Target the weakest clarity dimension in each round unless `--frontier` mode is explicitly requested.
+4. **Round 0 Topology Gate**: Enumerate and confirm top-level components before running depth-first inquiry.
+5. **Codebase Exploration First**: Use file viewing or search tools before asking questions about existing code (brownfield). Cite findings directly.
+6. **Mathematical Ambiguity Scoring**: Score clarity after every user answer and display ambiguity transparently.
+7. **No Mutation Before Approval**: Never edit source code, execute destructive commands, or commit changes during the interview.
+8. **Artifact Discipline**: Save final specifications to `.dip/specs/deep-interview-{slug}.md`. Store state in `.dip/state/` if needed.
+9. **User Language Match**: Conduct user-facing dialogue and questions in the language used by the user (defaulting to Japanese if addressed in Japanese), maintaining natural and professional phrasing.
 </Execution_Policy>
 
 ## Ambiguity Scoring Dimensions

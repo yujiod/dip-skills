@@ -29,8 +29,8 @@ level: 4
 1. **Lifecycle Architecture & Subagent Separation**:
    - **Phase 0: Socratic Expansion (`dip:deep-interview`) - Lead Agent Skill Activation**:
      - The interactive UI modal tool (`ask_question`) requires the interactive main chat session and **CANNOT be executed by background subagents**.
-     - Therefore, the **Lead agent MUST directly activate and execute the `dip:deep-interview` skill**.
-     - On Turn 1, the Lead agent MUST load [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) via `view_file` and execute its complete methodology: 4-dimension scoring, Socratic inquiry via `ask_question`, and specification artifact generation (`.dip/specs/deep-interview-{slug}.md`).
+     - Therefore, the **Lead agent MUST directly execute the `dip:deep-interview` skill workflow**.
+     - **Tool Sequence Hard Gate (Zero Shortcut Rule)**: Calling `ask_question` directly without prior codebase exploration and ambiguity calculation is **STRICTLY PROHIBITED**. On Turn 1, the Lead agent MUST load [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) via `view_file`, explore codebase context, announce the interview start with initial 4-dimension scores, and only then proceed to Socratic inquiry via `ask_question`.
      - Skipping `dip:deep-interview` is strictly prohibited.
    - **Phases 1 - 4: Mandatory Subagent Separation (Strictly No Self-Agreement)**:
      - Once the specification is established, self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
@@ -89,14 +89,17 @@ level: 4
 
 ### Phase 0: Expansion (`dip:deep-interview`) - MANDATORY LEAD ACTIVATION
 - **Session Constraint**: Interactive UI modals (`ask_question`) can ONLY be presented by the interactive main chat session; background subagents cannot interact with the user. Therefore, the Lead agent directly executes the `dip:deep-interview` skill.
-- **Skill Activation Protocol (Turn 1)**:
-  1. The Lead agent MUST immediately read [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) using `view_file` (or use the exact path from system prompt `Available skills`).
-  2. Strictly adhere to all procedures defined in `dip:deep-interview`:
-     - Inspect workspace codebase context first.
-     - Measure clarity and ambiguity across the 4 weighted dimensions ($W_{goal}=0.30$, $W_{constraints}=0.25$, $W_{criteria}=0.25$, $W_{context}=0.20$).
-     - Execute the Socratic inquiry loop using `ask_question` until Ambiguity $\le 20\%$ (or configured threshold).
-     - Generate and persist the formal specification artifact to `.dip/specs/deep-interview-{slug}.md`.
-  3. Present the confirmed specification and verify `.dip/specs/deep-interview-{slug}.md` is written before moving to Phase 1.
+- **Strict Execution Sequence (Zero-Shortcut Rule)**:
+  Calling `ask_question` blindly without following the protocol is a **CRITICAL PROTOCOL VIOLATION**. The Lead agent MUST strictly follow this exact 4-step sequence:
+  1. **Step 1 - Skill Ingestion (Turn 1)**: Immediately read [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) using `view_file` (or use the exact path from system prompt `Available skills`).
+  2. **Step 2 - Context & Brownfield Exploration**: Inspect workspace code, tests, and any prior `.dip/specs/` or `.dip/plans/`. Never question the user regarding existing code without checking it first.
+  3. **Step 3 - Interview Announcement & Ambiguity Scoring**: Output visible text in the chat declaring:
+     - Header: `### [Phase 0: dip:deep-interview] 要件展開開始`
+     - Analysis: Project type (Greenfield vs Brownfield) & codebase context findings.
+     - Ambiguity Score: Initial scoring across the 4 weighted dimensions ($W_{goal}=0.30$, $W_{constraints}=0.25$, $W_{criteria}=0.25$, $W_{context}=0.20$) and target threshold ($\le 20\%$).
+     - Scope Topology: Candidate components identified (1 to 6 components).
+  4. **Step 4 - Socratic Inquiry via `ask_question`**: Present Round 0 (Topology confirmation) or the weakest dimension's targeted question via `ask_question`.
+- **Specification Persistence**: Repeat the inquiry loop until $\text{Ambiguity} \le 20\%$. Persist the finalized specification artifact to `.dip/specs/deep-interview-{slug}.md`.
 - **Hard Gate Rule**:
   - ONLY skip Phase 0 if a valid, approved specification file (`.dip/specs/deep-interview-*.md`) already exists in workspace.
   - Moving to Phase 1 (Planning) or Phase 2 (Execution) without completing `dip:deep-interview` and generating `.dip/specs/deep-interview-{slug}.md` is a **CRITICAL PROTOCOL VIOLATION**.
