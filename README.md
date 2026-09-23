@@ -154,9 +154,13 @@ agents/        # サブエージェント定義 (.md)
 
 ## インストール・セットアップ
 
-AIエージェント用パッケージマネージャー `npx skills`（Vercel Labs提供）を用いてインストールします。
+本リポジトリの機能（スキル群およびサブエージェント群）を完全に利用するには、**1. スキル群のインストール** と **2. サブエージェント群のインストール** の2ステップを実行します。
 
-### 1. プロジェクトへのインストール（推奨）
+### ステップ 1: スキル群のインストール (`npx skills`)
+
+AIエージェント用パッケージマネージャー `npx skills`（Vercel Labs提供）を用いてスキルをインストールします。
+
+#### プロジェクトへのインストール（推奨）
 
 対象プロジェクトのルートディレクトリで実行します。
 
@@ -180,7 +184,7 @@ npx skills add yujiod/dip-skills --agent claude-code cursor
 npx skills add yujiod/dip-skills --skill dip-autopilot
 ```
 
-### 2. グローバル利用（ユーザーレベル）
+#### グローバル利用（ユーザーレベル）
 
 マシン上の全プロジェクトから利用したい場合は `-g` フラグを付与します。
 
@@ -188,7 +192,36 @@ npx skills add yujiod/dip-skills --skill dip-autopilot
 npx skills add yujiod/dip-skills -g
 ```
 
-### 3. チーム開発・CI/CD運用（ロックファイル復元）
+---
+
+### ステップ 2: サブエージェント群のインストール (`npx degit`)
+
+各スキルが実行時に起動する全19種の専門サブエージェント定義（`dip-*`）を配備します。`npx degit` を用いることで、Git clone を行うことなく必要なエージェント定義ディレクトリのみをワンライナーで配備できます。
+
+#### プロジェクトへの配備（推奨）
+
+対象プロジェクトのルートディレクトリで実行し、プロジェクトの Git 管理に含めます。
+
+```bash
+# プロジェクト直下の .agents/agents に展開
+npx degit yujiod/dip-skills/agents .agents/agents
+
+# Git でコミットしてチーム共有
+git add .agents/agents
+```
+
+#### グローバル配備（マシン共通利用）
+
+マシン上のすべてのプロジェクトから共通してエージェントを利用可能にします。
+
+```bash
+# ユーザーのホームディレクトリ配下の ~/.agents/agents に展開
+npx degit yujiod/dip-skills/agents ~/.agents/agents
+```
+
+---
+
+### チーム開発・CI/CD運用（ロックファイル復元）
 
 `npx skills add` 実行時に `.skills.json` および `skills-lock.json` が生成されます。これらを Git 管理に含めることで、チーム開発や CI 環境で同一バージョンのスキルを確実に再現できます。
 
@@ -203,7 +236,9 @@ npx skills list
 npx skills update
 ```
 
-### 4. 手動登録（ローカル開発 / Antigravity 直接設定）
+---
+
+### 手動登録（ローカル開発 / Antigravity 直接設定）
 
 本リポジトリをクローンして直接開発する場合や、Antigravity の設定ファイルから参照する場合は以下のように指定します。
 
@@ -233,6 +268,13 @@ npx skills update
       }
     ]
   }
+  ```
+
+- **エージェントの手動シンボリックリンク配備**:
+  ```bash
+  # グローバル配備（クローン元の更新を自動反映）
+  mkdir -p ~/.agents/agents
+  ln -sf /path/to/dip-skills/agents/*.md ~/.agents/agents/
   ```
 
 ---
