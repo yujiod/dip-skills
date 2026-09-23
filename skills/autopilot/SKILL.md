@@ -28,11 +28,12 @@ level: 4
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Self-Agreement Across All Phases)**:
    - Self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
-   - Every phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`.
-   - **Planning**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
-   - **Execution**: Dispatched Code Executor subagents (`dip:execute`).
-   - **QA**: Dispatched QA Engineer subagent (`dip:verify`).
-   - **Validation**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
+   - Every phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`, except for user-facing Socratic expansion in Phase 0.
+   - **Expansion (Phase 0)**: Lead agent executes `dip:deep-interview` runbook directly using `ask_question` (interactive user dialogue requires lead context; it is NOT a subagent TypeName).
+   - **Planning (Phase 1)**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
+   - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
+   - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
+   - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
 2. **Phase Completion Gate**:
    - Each phase must satisfy its verification gate before the next phase begins.
 3. **Hybrid Smart Progression**:
@@ -81,14 +82,17 @@ level: 4
 ## Detailed Phases
 
 ### Phase 0: Expansion (`dip:deep-interview`)
+- **Runbook**: Read instructions using `view_file` on [skills/deep-interview/SKILL.md](../deep-interview/SKILL.md).
+- **Execution Mode**: Direct execution by Lead Agent using `ask_question` (do NOT invoke as a subagent TypeName).
 - **Input Check**: Inspect `.dip/specs/` for an existing specification.
 - If existing spec is found and valid: reuse immediately and skip to Phase 1.
 - If vague or new:
   - Prompt user: "Request received. Starting deep interview to crystallize requirements."
-  - Execute `dip:deep-interview` loop until Ambiguity $\le 20\%$ (or configured threshold).
+  - Execute `dip:deep-interview` Socratic loop via `ask_question` until Ambiguity $\le 20\%$ (or configured threshold).
   - Yields `.dip/specs/deep-interview-{slug}.md`.
 
 ### Phase 1: Planning (`dip:deep-plan`)
+- **Runbook**: Read instructions using `view_file` on [skills/deep-plan/SKILL.md](../deep-plan/SKILL.md).
 - **Input Check**: Inspect `.dip/plans/` for an existing plan matching the spec.
 - If existing approved plan exists: skip directly to Phase 2.
 - Otherwise:
@@ -99,18 +103,21 @@ level: 4
   - **Approval Gate**: Prompt user for explicit approval to begin execution.
 
 ### Phase 2: Execution (`dip:execute`)
+- **Runbook**: Read instructions using `view_file` on [skills/execute/SKILL.md](../execute/SKILL.md).
 - Read approved `.dip/plans/plan-{slug}.md`.
 - Break plan into atomic work milestones.
 - Dispatch implementation tasks to isolated executor subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`).
 - Run independent components in parallel if `--parallel` is active.
 
 ### Phase 3: QA Cycling (`dip:verify`)
+- **Runbook**: Read instructions using `view_file` on [skills/verify/SKILL.md](../verify/SKILL.md).
 - Dispatch QA Engineer subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
 - Run project build, lint, and test suites.
 - If failures occur: diagnose and apply targeted fixes (up to 5 cycles).
 - **Guardrail**: If the identical error signature occurs 3 times, abort and escalate to user.
 
 ### Phase 4: Validation (`dip:review`)
+- **Runbook**: Read instructions using `view_file` on [skills/review/SKILL.md](../review/SKILL.md).
 - Dispatch 3 independent reviewer subagents in parallel via `invoke_subagent` (`Model: "pro"`):
   1. **Architect Reviewer**: Verifies plan compliance and interface boundaries.
   2. **Security Reviewer**: Verifies OWASP, credential safety, and data sanitization.
