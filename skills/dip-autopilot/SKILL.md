@@ -28,17 +28,18 @@ level: 4
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Self-Agreement Across All Phases)**:
    - Self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
-   - Every phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`, except for user-facing Socratic expansion in Phase 0.
-   - **Expansion (Phase 0)**: Lead agent executes `dip:deep-interview` runbook directly using `ask_question` (interactive user dialogue requires lead context; it is NOT a subagent TypeName).
+   - Every phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`, with the Lead agent strictly enforcing the sequential lifecycle gates.
+   - **Expansion (Phase 0 - MANDATORY)**: The Lead agent MUST directly execute the `dip:deep-interview` runbook via `ask_question` on Turn 1 before any planning or coding begins. Because user-facing interactive modals require lead session context, the Lead agent conducts the inquiry directly. Skipping Phase 0 is STRICTLY FORBIDDEN.
    - **Planning (Phase 1)**: Planner (Lead) + Architect subagent + Critic subagent (`dip:deep-plan`).
    - **Execution (Phase 2)**: Dispatched Code Executor subagents (`dip:execute`).
    - **QA (Phase 3)**: Dispatched QA Engineer subagent (`dip:verify`).
    - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect, Security, Code (`dip:review`).
 2. **Phase Completion Gate**:
    - Each phase must satisfy its verification gate before the next phase begins.
-3. **Hybrid Smart Progression**:
-   - If an approved specification (`.dip/specs/deep-interview-*.md`) or consensus plan (`.dip/plans/plan-*.md`) already exists in workspace, skip Phase 0 and/or Phase 1 and jump directly to Phase 2 (Execution).
-   - If starting from an ambiguous prompt, initiate `dip:deep-interview` before architectural planning.
+3. **Hybrid Smart Progression & Strict Gating**:
+   - If an approved specification (`.dip/specs/deep-interview-*.md`) already exists in workspace, reuse it and jump to Phase 1.
+   - If an approved consensus plan (`.dip/plans/plan-*.md`) already exists in workspace, skip Phase 0 & 1 and jump directly to Phase 2 (Execution).
+   - **NO SELF-EXEMPTION (Zero-Skip Rule)**: The Lead agent is STRICTLY PROHIBITED from skipping Phase 0 by claiming the user's prompt is "already clear", "detailed", or "unambiguous". Every new request contains implicit assumptions. You MUST execute Socratic questioning via `ask_question` to measure ambiguity and generate `.dip/specs/deep-interview-{slug}.md`.
 4. **Escalation & Stop Conditions**:
    - Stop and report when the same QA error persists across 3 consecutive cycles.
    - Stop and report when validation fails across 3 re-validation rounds.
@@ -81,15 +82,17 @@ level: 4
 
 ## Detailed Phases
 
-### Phase 0: Expansion (`dip:deep-interview`)
+### Phase 0: Expansion (`dip:deep-interview`) - MANDATORY HARD GATE
 - **Runbook**: Read instructions using `view_file` on [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) (or use the exact path from system prompt `Available skills`).
-- **Execution Mode**: Direct execution by Lead Agent using `ask_question` (do NOT invoke as a subagent TypeName).
-- **Input Check**: Inspect `.dip/specs/` for an existing specification.
-- If existing spec is found and valid: reuse immediately and skip to Phase 1.
-- If vague or new:
-  - Prompt user: "Request received. Starting deep interview to crystallize requirements."
-  - Execute `dip:deep-interview` Socratic loop via `ask_question` until Ambiguity $\le 20\%$ (or configured threshold).
-  - Yields `.dip/specs/deep-interview-{slug}.md`.
+- **Execution Mode**: Direct execution by Lead Agent using `ask_question`. (Do NOT invoke as a subagent TypeName; user interaction requires lead session context).
+- **Hard Gate Rule**:
+  - ONLY skip Phase 0 if a valid, approved specification file (`.dip/specs/deep-interview-*.md`) already exists in workspace.
+  - OTHERWISE, Phase 0 is **STRICTLY MANDATORY**. Planning, dispatching subagents, or editing code before Phase 0 completion is a **CRITICAL PROTOCOL VIOLATION**.
+  - **Zero Self-Exemption**: Never judge the user prompt as "already clear" or "sufficiently detailed". Every request has unstated assumptions, boundaries, and acceptance criteria.
+- **Action (Turn 1)**:
+  - Immediately formulate targeted inquiry and call `ask_question` tool.
+  - Execute Socratic loop until Ambiguity $\le 20\%$ (or configured threshold).
+  - Save finalized specification artifact to `.dip/specs/deep-interview-{slug}.md`.
 
 ### Phase 1: Planning (`dip:deep-plan`)
 - **Runbook**: Read instructions using `view_file` on [skills/dip-deep-plan/SKILL.md](../dip-deep-plan/SKILL.md) (or use the exact path from system prompt `Available skills`).
