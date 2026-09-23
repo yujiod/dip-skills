@@ -124,7 +124,7 @@ npx skills add yujiod/dip-skills --agent claude-code cursor
 特定のスキルのみを個別にインストールする場合：
 
 ```bash
-npx skills add yujiod/dip-skills --skill autopilot
+npx skills add yujiod/dip-skills --skill dip-autopilot
 ```
 
 ### 2. グローバル利用（ユーザーレベル）

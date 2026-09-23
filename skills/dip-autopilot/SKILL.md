@@ -82,7 +82,7 @@ level: 4
 ## Detailed Phases
 
 ### Phase 0: Expansion (`dip:deep-interview`)
-- **Runbook**: Read instructions using `view_file` on [skills/deep-interview/SKILL.md](../deep-interview/SKILL.md).
+- **Runbook**: Read instructions using `view_file` on [skills/dip-deep-interview/SKILL.md](../dip-deep-interview/SKILL.md) (or use the exact path from system prompt `Available skills`).
 - **Execution Mode**: Direct execution by Lead Agent using `ask_question` (do NOT invoke as a subagent TypeName).
 - **Input Check**: Inspect `.dip/specs/` for an existing specification.
 - If existing spec is found and valid: reuse immediately and skip to Phase 1.
@@ -92,7 +92,7 @@ level: 4
   - Yields `.dip/specs/deep-interview-{slug}.md`.
 
 ### Phase 1: Planning (`dip:deep-plan`)
-- **Runbook**: Read instructions using `view_file` on [skills/deep-plan/SKILL.md](../deep-plan/SKILL.md).
+- **Runbook**: Read instructions using `view_file` on [skills/dip-deep-plan/SKILL.md](../dip-deep-plan/SKILL.md) (or use the exact path from system prompt `Available skills`).
 - **Input Check**: Inspect `.dip/plans/` for an existing plan matching the spec.
 - If existing approved plan exists: skip directly to Phase 2.
 - Otherwise:
@@ -103,21 +103,21 @@ level: 4
   - **Approval Gate**: Prompt user for explicit approval to begin execution.
 
 ### Phase 2: Execution (`dip:execute`)
-- **Runbook**: Read instructions using `view_file` on [skills/execute/SKILL.md](../execute/SKILL.md).
+- **Runbook**: Read instructions using `view_file` on [skills/dip-execute/SKILL.md](../dip-execute/SKILL.md) (or use the exact path from system prompt `Available skills`).
 - Read approved `.dip/plans/plan-{slug}.md`.
 - Break plan into atomic work milestones.
 - Dispatch implementation tasks to isolated executor subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`).
 - Run independent components in parallel if `--parallel` is active.
 
 ### Phase 3: QA Cycling (`dip:verify`)
-- **Runbook**: Read instructions using `view_file` on [skills/verify/SKILL.md](../verify/SKILL.md).
+- **Runbook**: Read instructions using `view_file` on [skills/dip-verify/SKILL.md](../dip-verify/SKILL.md) (or use the exact path from system prompt `Available skills`).
 - Dispatch QA Engineer subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
 - Run project build, lint, and test suites.
 - If failures occur: diagnose and apply targeted fixes (up to 5 cycles).
 - **Guardrail**: If the identical error signature occurs 3 times, abort and escalate to user.
 
 ### Phase 4: Validation (`dip:review`)
-- **Runbook**: Read instructions using `view_file` on [skills/review/SKILL.md](../review/SKILL.md).
+- **Runbook**: Read instructions using `view_file` on [skills/dip-review/SKILL.md](../dip-review/SKILL.md) (or use the exact path from system prompt `Available skills`).
 - Dispatch 3 independent reviewer subagents in parallel via `invoke_subagent` (`Model: "pro"`):
   1. **Architect Reviewer**: Verifies plan compliance and interface boundaries.
   2. **Security Reviewer**: Verifies OWASP, credential safety, and data sanitization.
