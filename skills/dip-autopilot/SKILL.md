@@ -34,12 +34,12 @@ level: 4
      - Skipping `dip:deep-interview` is strictly prohibited.
    - **Phases 1 - 4: Mandatory Subagent Separation (Strictly No Self-Agreement)**:
      - Once the specification is established, self-agreement, self-implementation, or self-review within the lead agent context is **strictly prohibited**.
-     - Every subsequent phase leverages dedicated, isolated subagents dispatched via `invoke_subagent`:
-       - **Expansion (Phase 0)**: Lead + [`dip-explore`](../../agents/dip-explore.md) + [`dip-analyst`](../../agents/dip-analyst.md) + [`dip-critic`](../../agents/dip-critic.md).
-       - **Planning (Phase 1)**: Planner (Lead / [`agents/dip-planner.md`](../../agents/dip-planner.md)) + Architect subagent ([`agents/dip-architect.md`](../../agents/dip-architect.md)) + Critic subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md)) (`dip:deep-plan`).
-       - **Execution (Phase 2)**: Dispatched Code Executor subagents ([`agents/dip-executor.md`](../../agents/dip-executor.md)) + [`dip-code-simplifier`](../../agents/dip-code-simplifier.md) + [`dip-git-master`](../../agents/dip-git-master.md) (`dip:execute`).
-       - **QA (Phase 3)**: Dispatched QA Engineer subagent ([`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md)) + [`dip-debugger`](../../agents/dip-debugger.md) + [`dip-verifier`](../../agents/dip-verifier.md) (`dip:verify`).
-       - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect ([`agents/dip-architect.md`](../../agents/dip-architect.md)), Security ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md)), Code ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md)) (`dip:review`).
+     - Every subsequent phase leverages dedicated, isolated subagents dispatched via `invoke_subagent` using the corresponding agent defined in `agents/`:
+       - **Expansion (Phase 0)**: Lead + [`dip-explore`](../../agents/dip-explore.md) (`TypeName: "dip-explore"`) + [`dip-analyst`](../../agents/dip-analyst.md) (`TypeName: "dip-analyst"`) + [`dip-critic`](../../agents/dip-critic.md) (`TypeName: "dip-critic"`).
+       - **Planning (Phase 1)**: Planner (Lead / [`agents/dip-planner.md`](../../agents/dip-planner.md)) + Architect subagent ([`agents/dip-architect.md`](../../agents/dip-architect.md), `TypeName: "dip-architect"`) + Critic subagent ([`agents/dip-critic.md`](../../agents/dip-critic.md), `TypeName: "dip-critic"`) (`dip:deep-plan`).
+       - **Execution (Phase 2)**: Dispatched Code Executor subagents ([`agents/dip-executor.md`](../../agents/dip-executor.md), `TypeName: "dip-executor"`) + [`dip-code-simplifier`](../../agents/dip-code-simplifier.md) (`TypeName: "dip-code-simplifier"`) + [`dip-git-master`](../../agents/dip-git-master.md) (`TypeName: "dip-git-master"`) (`dip:execute`).
+       - **QA (Phase 3)**: Dispatched QA Engineer subagent ([`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md), `TypeName: "dip-qa-tester"`) + [`dip-debugger`](../../agents/dip-debugger.md) (`TypeName: "dip-debugger"`) + [`dip-verifier`](../../agents/dip-verifier.md) (`TypeName: "dip-verifier"`) (`dip:verify`).
+       - **Validation (Phase 4)**: 3 parallel reviewer subagents: Architect ([`agents/dip-architect.md`](../../agents/dip-architect.md), `TypeName: "dip-architect"`), Security ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md), `TypeName: "dip-security-reviewer"`), Code ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md), `TypeName: "dip-code-reviewer"`) (`dip:review`).
 2. **Skill Resolution Protocol (Discovery Order)**:
    - When loading runbooks for any phase via `view_file`, resolve paths in the following priority order:
      1. Exact path listed in system prompt `Available skills` (highest priority)
@@ -118,7 +118,7 @@ level: 4
 - If existing approved plan exists: skip directly to Phase 2.
 - Otherwise:
   - Formulate draft plan with RALPLAN-DR framework.
-  - Dispatch Architect and Critic subagents via `invoke_subagent` (`Model: "pro"`).
+  - Dispatch Architect (`TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`) and Critic (`TypeName: "dip-critic"`, `Role: "Critical Reviewer"`, `Model: "pro"`) subagents via `invoke_subagent`.
   - Iterate until unanimous consensus is recorded.
   - Yields `.dip/plans/plan-{slug}.md` (`Status: PENDING APPROVAL`).
   - **Approval Gate**: Prompt user for explicit approval to begin execution.
@@ -127,24 +127,24 @@ level: 4
 - **Runbook**: Read instructions using `view_file` on `dip:execute` runbook (resolve path: Available skills -> `~/.agents/skills/dip-execute/SKILL.md` -> `.agents/skills/dip-execute/SKILL.md` -> `skills/dip-execute/SKILL.md`).
 - Read approved `.dip/plans/plan-{slug}.md`.
 - Break plan into atomic work milestones.
-- Dispatch implementation tasks to isolated executor subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`).
+- Dispatch implementation tasks to isolated executor subagents via `invoke_subagent` (`TypeName: "dip-executor"`, `Role: "Code Executor"`). For post-implementation refactoring, dispatch `TypeName: "dip-code-simplifier"`; for git atomic commits, dispatch `TypeName: "dip-git-master"`.
 - Run independent components in parallel if `--parallel` is active.
 
 ### Phase 3: QA Cycling (`dip:verify`)
 - **Runbook**: Read instructions using `view_file` on `dip:verify` runbook (resolve path: Available skills -> `~/.agents/skills/dip-verify/SKILL.md` -> `.agents/skills/dip-verify/SKILL.md` -> `skills/dip-verify/SKILL.md`).
-- Dispatch QA Engineer subagent via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
+- Dispatch QA Engineer subagent via `invoke_subagent` (`TypeName: "dip-qa-tester"`, `Role: "QA Engineer"`).
 - Run project build, lint, and test suites.
-- If failures occur: diagnose and apply targeted fixes (up to 5 cycles).
+- If failures occur: diagnose root cause using `dip-debugger` (`TypeName: "dip-debugger"`) and apply targeted fixes (up to 5 cycles). Verify acceptance evidence with `dip-verifier` (`TypeName: "dip-verifier"`).
 - **Guardrail**: If the identical error signature occurs 3 times, abort and escalate to user.
 
 ### Phase 4: Validation (`dip:review`)
 - **Runbook**: Read instructions using `view_file` on `dip:review` runbook (resolve path: Available skills -> `~/.agents/skills/dip-review/SKILL.md` -> `.agents/skills/dip-review/SKILL.md` -> `skills/dip-review/SKILL.md`).
 - Dispatch 3 independent reviewer subagents in parallel via `invoke_subagent` (`Model: "pro"`):
-  1. **Architect Reviewer**: Verifies plan compliance and interface boundaries.
-  2. **Security Reviewer**: Verifies OWASP, credential safety, and data sanitization.
-  3. **Code Reviewer**: Verifies maintainability, edge cases, and removes AI slop.
+  1. **Architect Reviewer** (`TypeName: "dip-architect"`, `Role: "Architect Reviewer"`): Verifies plan compliance and interface boundaries.
+  2. **Security Reviewer** (`TypeName: "dip-security-reviewer"`, `Role: "Security Reviewer"`): Verifies OWASP, credential safety, and data sanitization.
+  3. **Code Reviewer** (`TypeName: "dip-code-reviewer"`, `Role: "Code Reviewer"`): Verifies maintainability, edge cases, and removes AI slop.
 - Require unanimous `APPROVE`.
-- If issues are flagged: dispatch executor subagent to fix, re-verify with `dip:verify`, and re-review (up to 3 rounds).
+- If issues are flagged: dispatch executor subagent (`TypeName: "dip-executor"`, or `TypeName: "dip-code-simplifier"` for refactoring) to fix, re-verify with `dip:verify`, and re-review (up to 3 rounds).
 
 ### Phase 5: Cleanup & Delivery
 - When all 3 reviewers approve:

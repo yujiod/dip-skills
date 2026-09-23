@@ -26,11 +26,11 @@ level: 4
 
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Self-Validation)**:
-   - Verification runs and automated remediation **MUST** be performed by dedicated QA subagents via `invoke_subagent` (`TypeName: "self"`, `Role: "QA Engineer"`).
-   - Test execution adheres to [`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md).
-   - Test strategy gaps or missing tests are designed via `dip-test-engineer` ([`agents/dip-test-engineer.md`](../../agents/dip-test-engineer.md)).
-   - Failure analysis and root-cause remediation leverage `dip-debugger` ([`agents/dip-debugger.md`](../../agents/dip-debugger.md)).
-   - Final acceptance criteria sign-off is audited via `dip-verifier` ([`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
+   - Verification runs and automated remediation **MUST** be performed by dedicated QA subagents via `invoke_subagent` using the corresponding agents defined in `agents/`:
+     - **QA Tester** (`TypeName: "dip-qa-tester"`, `Role: "QA Engineer"`): Executes builds, linters, and test suites adhering to [`agents/dip-qa-tester.md`](../../agents/dip-qa-tester.md).
+     - **Test Engineer** (`TypeName: "dip-test-engineer"`, `Role: "Test Engineer"`): Designs test strategy gaps, integration/e2e coverage, and missing tests ([`agents/dip-test-engineer.md`](../../agents/dip-test-engineer.md)).
+     - **Debugger / Tracer** (`TypeName: "dip-debugger"`, `Role: "Debugger"` or `TypeName: "dip-tracer"`, `Role: "Causal Tracer"`): Performs failure analysis, root-cause diagnosis, and minimal targeted fixes ([`agents/dip-debugger.md`](../../agents/dip-debugger.md), [`agents/dip-tracer.md`](../../agents/dip-tracer.md)).
+     - **Verifier** (`TypeName: "dip-verifier"`, `Role: "Verification Auditor"`): Audits final acceptance criteria sign-off and empirical verification evidence ([`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
    - Primary agent coordinates execution cycles and monitors guardrails.
 2. **Deterministic Verification Sequence**:
    1. Build / Compilation check
@@ -39,7 +39,7 @@ level: 4
    4. Newly introduced feature tests
 3. **Bounded Remediation Loop**:
    - Up to 5 QA cycles allowed by default (`maxQaCycles = 5`).
-   - If tests fail, the QA subagent diagnoses the root cause (using `dip-debugger`), applies a minimal targeted fix, and re-runs tests.
+   - If tests fail, the QA subagent diagnoses the root cause (using `dip-debugger`, `TypeName: "dip-debugger"`), applies a minimal targeted fix, and re-runs tests.
 4. **Escalation & Stop Condition**:
    - **Identical Error Guard**: If the exact same failure persists across 3 consecutive cycles, **STOP IMMEDIATELY**. Report the fundamental blocker to the user with full diagnostic evidence.
    - If 5 cycles are exhausted without full pass, stop and prompt user.
@@ -58,7 +58,7 @@ level: 4
    [1. QA Plan] ──────────> Identify build, lint, and test commands
         │
         v
-   [2. QA Subagent] ──────> invoke_subagent(TypeName="self", Role="QA Engineer")
+   [2. QA Subagent] ──────> invoke_subagent(TypeName="dip-qa-tester", Role="QA Engineer")
         │                    Execute build -> lint -> test suite
         │
    ┌────┴──────────────────────────┐
@@ -80,9 +80,10 @@ level: 4
 
 ### Step 2: QA Dispatch (`invoke_subagent`)
 Launch a QA subagent:
-- `TypeName`: `"self"`
+- `TypeName`: `"dip-qa-tester"`
 - `Role`: `"QA Engineer"`
 - `Prompt`: Run build, lint, and test commands; inspect failure stack traces; isolate causes.
+*(Optional / Failure handling)*: If test strategy/harness gaps are identified, dispatch `TypeName: "dip-test-engineer"`. If test failures require deep diagnosis, dispatch `TypeName: "dip-debugger"` or `TypeName: "dip-tracer"`. For final criteria verification, dispatch `TypeName: "dip-verifier"`.
 
 ### Step 3: Diagnostic & Fix Cycle
 - If any check fails:

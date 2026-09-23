@@ -30,10 +30,10 @@ level: 4
    - Self-review within the lead or executor context is **strictly prohibited**.
    - The primary agent coordinates reviews and aggregates verdicts.
    - Three independent subagents **MUST** be launched in parallel via `invoke_subagent` (`Model: "pro"`):
-     - **Architect Reviewer** ([`agents/dip-architect.md`](../../agents/dip-architect.md)): Verifies functional completeness, design adherence, and boundaries.
-     - **Security Reviewer** ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md)): Verifies vulnerabilities, authentication, authorization, injection, and secrets.
-     - **Code Reviewer** ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md)): Verifies cleanliness, maintainability, tests, and removes AI slop/redundancy.
-     - (Remediation): Targeted simplification uses `dip-code-simplifier` ([`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)) and final evidence audit uses `dip-verifier` ([`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
+     - **Architect Reviewer** (`TypeName: "dip-architect"`, `Role: "Architect Reviewer"`): Verifies functional completeness, design adherence, and boundaries ([`agents/dip-architect.md`](../../agents/dip-architect.md)).
+     - **Security Reviewer** (`TypeName: "dip-security-reviewer"`, `Role: "Security Reviewer"`): Verifies vulnerabilities, authentication, authorization, injection, and secrets ([`agents/dip-security-reviewer.md`](../../agents/dip-security-reviewer.md)).
+     - **Code Reviewer** (`TypeName: "dip-code-reviewer"`, `Role: "Code Reviewer"`): Verifies cleanliness, maintainability, tests, and removes AI slop/redundancy ([`agents/dip-code-reviewer.md`](../../agents/dip-code-reviewer.md)).
+     - (Remediation): Targeted fixes use `dip-executor` (`TypeName: "dip-executor"`, [`agents/dip-executor.md`](../../agents/dip-executor.md)), code simplification uses `dip-code-simplifier` (`TypeName: "dip-code-simplifier"`, [`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)), and final evidence audit uses `dip-verifier` (`TypeName: "dip-verifier"`, [`agents/dip-verifier.md`](../../agents/dip-verifier.md)).
 2. **Unanimous Consensus Gate (All Must Approve)**:
    - Every reviewer must explicitly issue `APPROVE` before code is accepted.
    - Any `REQUEST_CHANGES` verdict blocks completion.
@@ -71,15 +71,15 @@ level: 4
 ```
 
 ### 1. Architect Reviewer Subagent
-- Dispatch: `invoke_subagent` (`TypeName: "research"`, `Role: "Architect Reviewer"`, `Model: "pro"`).
+- Dispatch: `invoke_subagent` (`TypeName: "dip-architect"`, `Role: "Architect Reviewer"`, `Model: "pro"`).
 - Criteria: Does the code fulfill every requirement in the specification? Are architectural boundaries preserved? Any unauthorized scope creep?
 
 ### 2. Security Reviewer Subagent
-- Dispatch: `invoke_subagent` (`TypeName: "research"`, `Role: "Security Reviewer"`, `Model: "pro"`).
+- Dispatch: `invoke_subagent` (`TypeName: "dip-security-reviewer"`, `Role: "Security Reviewer"`, `Model: "pro"`).
 - Criteria: Check input validation, credential handling, token expiration, injection vectors, file traversal, and sensitive data leakage.
 
 ### 3. Code Reviewer Subagent
-- Dispatch: `invoke_subagent` (`TypeName: "research"`, `Role: "Code Reviewer"`, `Model: "pro"`).
+- Dispatch: `invoke_subagent` (`TypeName: "dip-code-reviewer"`, `Role: "Code Reviewer"`, `Model: "pro"`).
 - Criteria: Code style, maintainability, unnecessary boilerplate/AI-slop, edge case handling, reuse of existing project helpers.
 
 ---
@@ -100,7 +100,7 @@ level: 4
   - Signal readiness for completion or pull request.
 - If any reviewer requests changes:
   - Group findings by severity (Critical, High, Medium, Low).
-  - Launch executor subagent to resolve actionable findings.
+  - Launch executor subagent (`TypeName: "dip-executor"`, or `TypeName: "dip-code-simplifier"` for refactoring) to resolve actionable findings.
   - Re-verify with `dip:verify`.
   - Re-submit updated diff to reviewers (Round N+1).
 

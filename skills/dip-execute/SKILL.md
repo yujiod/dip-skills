@@ -28,10 +28,10 @@ level: 4
 <Execution_Policy>
 1. **Mandatory Subagent Separation (Strictly No Direct In-Place Implementation)**:
    - Primary agent acts as orchestrator / team lead.
-   - Code mutations **MUST** be delegated to isolated executor subagents using `invoke_subagent` (`TypeName: "self"`, `Role: "Code Executor"`) adhering to [`agents/dip-executor.md`](../../agents/dip-executor.md).
+   - Code mutations **MUST** be delegated to isolated executor subagents using `invoke_subagent` (`TypeName: "dip-executor"`, `Role: "Code Executor"`) adhering to [`agents/dip-executor.md`](../../agents/dip-executor.md).
    - The primary agent must never mutate source files directly when running `dip:execute`; all mutations are made by dispatched executor subagents.
-   - Code refinement, nesting elimination, and anti-slop cleaning may be dispatched to `dip-code-simplifier` ([`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)).
-   - Version control operations and clean commit splitting are managed via `dip-git-master` ([`agents/dip-git-master.md`](../../agents/dip-git-master.md)).
+   - Code refinement, nesting elimination, and anti-slop cleaning may be dispatched to `dip-code-simplifier` via `invoke_subagent` (`TypeName: "dip-code-simplifier"`, `Role: "Code Simplifier"`) ([`agents/dip-code-simplifier.md`](../../agents/dip-code-simplifier.md)).
+   - Version control operations and clean commit splitting are managed via `dip-git-master` via `invoke_subagent` (`TypeName: "dip-git-master"`, `Role: "Git Master"`) ([`agents/dip-git-master.md`](../../agents/dip-git-master.md)).
 2. **Phase-by-Phase Discipline**:
    - Deconstruct the plan into bounded, atomic milestones.
    - Independent work units may be dispatched to multiple parallel executor subagents (`--parallel`).
@@ -55,7 +55,7 @@ level: 4
 [1. Task Breakdown] ───────> Identify atomic units & dependency graph
          │
          v
-[2. Dispatch Executors] ───> invoke_subagent(TypeName="self", Role="Code Executor")
+[2. Dispatch Executors] ───> invoke_subagent(TypeName="dip-executor", Role="Code Executor")
          │                   (Parallel for independent tasks, sequential for dependents)
          v
 [3. Milestone Sanity] ─────> Verify local syntax/type validity per unit
@@ -72,9 +72,10 @@ level: 4
 ### Step 2: Executor Dispatch (`invoke_subagent`)
 For each task unit:
 - Dispatch a subagent via `invoke_subagent`:
-  - `TypeName`: `"self"`
+  - `TypeName`: `"dip-executor"`
   - `Role`: `"Code Executor: [Task Name]"`
   - `Prompt`: Include target file paths, interface specs, exact diff guidelines, and minimal mutation requirements.
+- *(Optional)*: For post-execution refactoring or simplifying code structure, dispatch `TypeName: "dip-code-simplifier"`. For committing and branch management, dispatch `TypeName: "dip-git-master"`.
 - Wait for subagent completion and collect modified file summaries.
 
 ### Step 3: Incremental Sanity Checks

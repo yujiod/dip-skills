@@ -37,9 +37,11 @@ Deep Plan triggers iterative, consensus-driven architecture and implementation p
 1. **Mandatory Subagent Separation (Strictly No Self-Agreement)**:
    - Self-agreement or persona play within the primary agent context is **strictly prohibited**.
    - The primary agent acts as **Planner** (following [`agents/dip-planner.md`](../../agents/dip-planner.md)).
-   - Codebase facts and existing architecture are investigated via `dip-explore` subagent ([`agents/dip-explore.md`](../../agents/dip-explore.md)).
-   - External library/API specifications are looked up via `dip-document-specialist` ([`agents/dip-document-specialist.md`](../../agents/dip-document-specialist.md)).
-   - The **Architect** ([`agents/dip-architect.md`](../../agents/dip-architect.md)) and **Critic** ([`agents/dip-critic.md`](../../agents/dip-critic.md)) roles **MUST** be dispatched as independent, isolated subagents using `invoke_subagent` (`Model: "pro"` recommended).
+   - Codebase facts and existing architecture are investigated via `dip-explore` subagent via `invoke_subagent(TypeName: "dip-explore", Role: "Codebase Explorer", Model: "flash")` ([`agents/dip-explore.md`](../../agents/dip-explore.md)).
+   - External library/API specifications are looked up via `dip-document-specialist` via `invoke_subagent(TypeName: "dip-document-specialist", Role: "Doc Specialist", Model: "flash")` ([`agents/dip-document-specialist.md`](../../agents/dip-document-specialist.md)).
+   - The **Architect** ([`agents/dip-architect.md`](../../agents/dip-architect.md)) and **Critic** ([`agents/dip-critic.md`](../../agents/dip-critic.md)) roles **MUST** be dispatched as independent, isolated subagents using `invoke_subagent`:
+     - Architect: `TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`
+     - Critic: `TypeName: "dip-critic"`, `Role: "Critical Reviewer"`, `Model: "pro"`
    - Consensus requires explicit approval from both external subagents. The primary agent must never approve its own draft on behalf of the Architect or Critic.
 2. **RALPLAN-DR Framework**:
    - **R**equirements & Principles (3-5 overarching engineering tenets)
@@ -101,7 +103,7 @@ If `--interactive` is enabled, present the draft plan and RALPLAN-DR summary to 
 - Options: `Proceed to review`, `Request adjustments`, `Cancel`.
 
 ### Step 3: Architect Review (Dispatched Subagent)
-Launch the Architect using `invoke_subagent` (`TypeName: "research"`, `Role: "System Architect"`, `Model: "pro"`).
+Launch the Architect using `invoke_subagent` (`TypeName: "dip-architect"`, `Role: "System Architect"`, `Model: "pro"`).
 The Architect reviews the snapshot without mutating it:
 - **Steelman Antithesis**: Formulate the strongest possible argument against the chosen approach.
 - **Trade-off Tensions**: Highlight architectural friction points (e.g., memory vs throughput, abstraction vs speed).
@@ -110,7 +112,7 @@ The Architect reviews the snapshot without mutating it:
 - Returns explicit verdict: `APPROVE` or `REQUEST_CHANGES` with actionable reasons.
 
 ### Step 4: Critic Review (Dispatched Subagent)
-Launch the Critic using `invoke_subagent` (`TypeName: "research"`, `Role: "Critical Reviewer"`, `Model: "pro"`).
+Launch the Critic using `invoke_subagent` (`TypeName: "dip-critic"`, `Role: "Critical Reviewer"`, `Model: "pro"`).
 The Critic acts as the gatekeeper of completeness and risk mitigation:
 - Enforce option-principle consistency.
 - Verify that every risk identified by the Architect has a concrete mitigation.
