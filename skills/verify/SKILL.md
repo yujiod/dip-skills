@@ -2,7 +2,7 @@
 name: verify
 description: Rigorous QA cycle executing builds, linters, tests, and automated fix loops with dedicated QA subagents
 argument-hint: "[--max-cycles <N>] <scope or test commands>"
-pipeline: [verify, review]
+pipeline: [verify, deep-review]
 handoff-policy: direct
 level: 4
 ---
@@ -64,7 +64,7 @@ level: 4
    ┌────┴──────────────────────────┐
    │ Check Outcome                 │
    │                               │
-   ├─► All Passed ─────────────────┼───► [Proceed to review]
+   ├─► All Passed ─────────────────┼───► [Proceed to deep-review]
    │                               │
    └─► Failures Detected ──────────┘
              │
@@ -94,4 +94,4 @@ Launch a QA subagent:
 ### Step 4: Verification Artifact & Handoff
 - Collect clean pass logs.
 - Record verification outcome in `.dip/state/qa-evidence.json`.
-- Hand off verified codebase directly to `review`.
+- Hand off verified codebase directly to `deep-review`.

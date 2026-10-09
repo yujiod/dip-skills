@@ -7,7 +7,7 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
 3. **`deep-plan`**: Iterative consensus planning among Planner, Architect, and Critic subagents using RALPLAN-DR structured deliberation.
 4. **`execute`**: Implementation execution carried out by isolated executor subagents.
 5. **`verify`**: Rigorous QA cycle executing builds, linters, tests, and automated fix loops with dedicated QA subagents.
-6. **`review`**: Multi-perspective validation by independent Architect, Security, and Code Reviewer subagents.
+6. **`deep-review`**: Multi-perspective validation by independent Architect, Security, and Code Reviewer subagents.
 
 ---
 
@@ -35,8 +35,8 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
         ├─► [Phase 3: QA検証] ─── verify (QA サブエージェント: Build -> Lint -> Test -> 自動修復)
         │                          (最大5サイクル / 同一エラー3回で安全停止)
         │
-        ├─► [Phase 4: 多角検証] ── review (Architect / Security / Code 3視点サブエージェント)
-        │                          成果物: .dip/reviews/review-{slug}.md (全会一致承認必須)
+        ├─► [Phase 4: 多角検証] ── deep-review (Architect / Security / Code 3視点サブエージェント)
+        │                          成果物: .dip/reviews/deep-review-{slug}.md (全会一致承認必須)
         │
         └─► [Phase 5: 完了納品] ── 中間状態クリーンアップ & 成果物報告
 ```
@@ -79,13 +79,13 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
   - テスト失敗時の自動修復ループ（最大5サイクル）。
   - **同一エラー安全停止ガード**: 同一エラーが3回連続した場合、根本的障害として即時中断・報告。
 
-### 6. `review` (3視点並列レビュー)
+### 6. `deep-review` (3視点並列レビュー)
 - **目的**: 納品前に、3つの独立したサブエージェントによる多角的な品質検証を並列実施します。
   1. **Architect Reviewer**: 仕様・計画との機能的一致、責務境界の維持。
   2. **Security Reviewer**: OWASP、認証認可、入力バリデーション、機密情報漏洩。
   3. **Code Reviewer**: 可読性、保守性、エッジケース、AI-Slop（冗長な定型コード）の排除。
 - **全会一致承認**: 全レビュアーの `APPROVE` が揃うまで完了と認めず、指摘事項は自動修正・再検証（最大3ラウンド）。
-- **成果物**: `.dip/reviews/review-{slug}.md`
+- **成果物**: `.dip/reviews/deep-review-{slug}.md`
 
 ---
 
@@ -97,7 +97,7 @@ A suite of advanced, specification-first workflow skills designed for Google Ant
 .dip/
 ├── specs/     # deep-interview で確定した仕様書 (.md)
 ├── plans/     # deep-plan で合意された計画書 (.md)
-├── reviews/   # review で記録された多角レビュー判定書 (.md)
+├── reviews/   # deep-review で記録された多角レビュー判定書 (.md)
 └── state/     # セッション実行状態・中間進行状況 (.json)
 
 agents/        # サブエージェント定義 (.md)
@@ -126,29 +126,29 @@ agents/        # サブエージェント定義 (.md)
 
 ## 移植サブエージェント一覧と担当スキル
 
-本リポジトリでは、各ライフサイクル工程に特化した19種類のサブエージェント定義（原文英語仕様）を標準配備しています（`agents/` および `.agents/agents/`）。
+本リポジトリでは、各ライフサイクル工程に特化した19種類のサブエージェント定義（原文英語仕様）を標準配備しています（`agents/`）。
 
 | エージェント名 | 種別 | 役割・責務 | 主な担当スキル |
 | :--- | :--- | :--- | :--- |
 | **`analyst`** | 読取専用 | 要件のギャップ抽出、暗黙の前提の炙り出し、受入基準の具体化 | `deep-interview`, `autopilot` |
 | **`explore`** | 読取専用 | 高速コードベース探索、Brownfield事前調査、環境事実の自律確認 | `deep-interview`, `deep-plan`, `autopilot` |
-| **`critic`** | 読取専用 | 批判的評価、Skeptic / Contrarian 視点、事前検死（Pre-Mortem）、前提脆弱性検証 | `deep-interview`, `deep-plan`, `review` |
-| **`architect`** | 読取専用 | アーキテクチャ健全性評価、対立仮説（Steelman）構築、トレードオフ分析 | `deep-plan`, `review`, `autopilot` |
+| **`critic`** | 読取専用 | 批判的評価、Skeptic / Contrarian 視点、事前検死（Pre-Mortem）、前提脆弱性検証 | `deep-interview`, `deep-plan`, `deep-review` |
+| **`architect`** | 読取専用 | アーキテクチャ健全性評価、対立仮説（Steelman）構築、トレードオフ分析 | `deep-plan`, `deep-review`, `autopilot` |
 | **`planner`** | 計画策定 | 実行計画策定・改定、タスク依存グラフ分解、RALPLAN-DRサマリー作成 | `deep-plan`, `autopilot` |
 | **`executor`** | 実装実行 | 最小差分（Smallest Viable Diff）によるアトミックなコード実装 | `execute`, `autopilot` |
 | **`qa-tester`** | 動作検証 | 対話的CLI/サービス起動テスト、コマンド出力キャプチャ、動作エビデンス収集 | `verify`, `autopilot` |
 | **`test-engineer`** | テスト作成 | テストピラミッド設計、カバレッジギャップ補完、単体/結合/E2Eテスト実装 | `verify` |
 | **`debugger`** | 原因分析 | エラー根本原因分析、スタックトレース解析、最小差分での障害解消 | `verify`, `execute` |
-| **`verifier`** | 判定照合 | 主観を排した受入基準の客観的検証、完了判定（PASS/FAIL）の監査 | `verify`, `review` |
+| **`verifier`** | 判定照合 | 主観を排した受入基準の客観的検証、完了判定（PASS/FAIL）の監査 | `verify`, `deep-review` |
 | **`security-reviewer`** | 監査 | OWASP Top 10、認証認可、入力バリデーション、機密情報漏洩スキャン | `review`, `autopilot` |
 | **`code-reviewer`** | 監査 | 仕様適合性検証、ロジック正確性、SOLID原則、AI-Slop（冗長コード）排除 | `review`, `autopilot` |
-| **`code-simplifier`** | 最適化 | 振る舞いを維持したネスト平坦化、過剰抽象化排除、保守性向上 | `execute`, `review` |
+| **`code-simplifier`** | 最適化 | 振る舞いを維持したネスト平坦化、過剰抽象化排除、保守性向上 | `execute`, `deep-review` |
 | **`document-specialist`** | 調査 | 外部公式ドキュメント、最新API仕様、バージョン互換性調査 | `deep-interview`, `deep-plan` |
 | **`writer`** | 文書化 | 仕様書、README、APIドキュメント、ユーザーガイド作成 | `deep-interview`, `deep-plan` |
 | **`git-master`** | VCS操作 | 論理的アトミックコミット分割、ブランチ管理、PR概要作成 | `execute`, `autopilot` |
 | **`designer`** | UI/UX | UI設計・デザインシステム・アクセシビリティ検証 | `deep-interview`, `deep-plan` |
 | **`scientist`** | ML/分析 | データ分析・MLモデル設計・実験追跡 | `verify`, `deep-plan` |
-| **`tracer`** | トレース | 実行トレース・コールグラフ解析・複雑データフロー追跡 | `verify`, `review` |
+| **`tracer`** | トレース | 実行トレース・コールグラフ解析・複雑データフロー追跡 | `verify`, `deep-review` |
 
 ---
 
@@ -306,7 +306,7 @@ execute .dip/plans/plan-auth.md
 verify
 
 # 5. 3視点品質レビュー
-review
+deep-review
 ```
 
 ---

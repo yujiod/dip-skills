@@ -1,17 +1,17 @@
 ---
-name: review
+name: deep-review
 description: Multi-perspective validation by independent Architect, Security, and Code Reviewer subagents
 argument-hint: "[--rounds <N>] <target scope or diff>"
-pipeline: [review, complete]
+pipeline: [deep-review, complete]
 handoff-policy: approval-required
-handoff: .dip/reviews/review-{slug}.md
+handoff: .dip/reviews/deep-review-{slug}.md
 level: 4
 ---
 
-# Review (`review`)
+# Deep Review (`deep-review`)
 
 <Purpose>
-`review` evaluates finished, verified work for architectural soundness, security integrity, code quality, and slop elimination before it ships. Reviewers NEVER author the changes they judge. It enforces 3-way cognitive diversity by dispatching independent subagents for Architect, Security, and Code reviews in parallel.
+`deep-review` evaluates finished, verified work for architectural soundness, security integrity, code quality, and slop elimination before it ships. Reviewers NEVER author the changes they judge. It enforces 3-way cognitive diversity by dispatching independent subagents for Architect, Security, and Code reviews in parallel.
 </Purpose>
 
 <Use_When>
@@ -44,7 +44,7 @@ level: 4
    - If consensus is not reached after 3 rounds, **STOP IMMEDIATELY**.
    - Present the conflicting requirements or persistent issues directly to the user.
 5. **Artifact Output**:
-   - Final review summary must be recorded in `.dip/reviews/review-{slug}.md`.
+   - Final review summary must be recorded in `.dip/reviews/deep-review-{slug}.md`.
 </Execution_Policy>
 
 ---
@@ -66,7 +66,7 @@ level: 4
                           │
                           v
             [Consensus Aggregator Gate]
-            ├─ All Approved? ──► Write .dip/reviews/review-{slug}.md -> Complete
+            ├─ All Approved? ──► Write .dip/reviews/deep-review-{slug}.md -> Complete
             └─ Any Rejection? ──► Remediate & Re-verify (Max 3 rounds)
 ```
 
@@ -96,7 +96,7 @@ level: 4
 
 ### Step 3: Synthesis & Remediation Gate
 - If all 3 approve:
-  - Generate `.dip/reviews/review-{slug}.md` with status `APPROVED`.
+  - Generate `.dip/reviews/deep-review-{slug}.md` with status `APPROVED`.
   - Signal readiness for completion or pull request.
 - If any reviewer requests changes:
   - Group findings by severity (Critical, High, Medium, Low).
@@ -105,4 +105,4 @@ level: 4
   - Re-submit updated diff to reviewers (Round N+1).
 
 ### Step 4: Final Sign-off
-- Output verdict summary to user with link to `.dip/reviews/review-{slug}.md`.
+- Output verdict summary to user with link to `.dip/reviews/deep-review-{slug}.md`.

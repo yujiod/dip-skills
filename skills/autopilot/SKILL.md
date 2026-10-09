@@ -2,7 +2,7 @@
 name: autopilot
 description: Full autonomous execution from product idea to working, verified code with subagent-gated pipeline
 argument-hint: "[--quick|--deep] [--skip-qa] [--skip-review] <product idea or task description>"
-pipeline: [deep-interview, deep-plan, execute, verify, review]
+pipeline: [deep-interview, deep-plan, execute, verify, deep-review]
 handoff-policy: approval-required
 level: 4
 ---
@@ -84,7 +84,7 @@ level: 4
    [Phase 3: QA Cycling] ────────► verify (QA Subagent: Build -> Lint -> Test -> Fix)
         │                          (Max 5 cycles, halt on 3 identical errors)
         v
-   [Phase 4: Validation] ────────► review (Parallel: Architect + Security + Code Subagents)
+   [Phase 4: Validation] ────────► deep-review (Parallel: Architect + Security + Code Subagents)
         │                          (Max 3 rounds, unanimous approval required)
         v
    [Phase 5: Cleanup & Delivery] ─► Clean .dip/state/, summarize deliverables to user
@@ -137,8 +137,8 @@ level: 4
 - If failures occur: diagnose root cause using `debugger` (`TypeName: "debugger"`) and apply targeted fixes (up to 5 cycles). Verify acceptance evidence with `verifier` (`TypeName: "verifier"`).
 - **Guardrail**: If the identical error signature occurs 3 times, abort and escalate to user.
 
-### Phase 4: Validation (`review`)
-- **Runbook**: Read instructions using `view_file` on `review` runbook (resolve path: Available skills -> `~/.agents/skills/review/SKILL.md` -> `.agents/skills/review/SKILL.md` -> `skills/review/SKILL.md`).
+### Phase 4: Validation (`deep-review`)
+- **Runbook**: Read instructions using `view_file` on `deep-review` runbook (resolve path: Available skills -> `~/.agents/skills/deep-review/SKILL.md` -> `.agents/skills/deep-review/SKILL.md` -> `skills/deep-review/SKILL.md`).
 - Dispatch 3 independent reviewer subagents in parallel via `invoke_subagent` (`Model: "pro"`):
   1. **Architect Reviewer** (`TypeName: "architect"`, `Role: "Architect Reviewer"`): Verifies plan compliance and interface boundaries.
   2. **Security Reviewer** (`TypeName: "security-reviewer"`, `Role: "Security Reviewer"`): Verifies OWASP, credential safety, and data sanitization.
@@ -148,7 +148,7 @@ level: 4
 
 ### Phase 5: Cleanup & Delivery
 - When all 3 reviewers approve:
-  - Record final review at `.dip/reviews/review-{slug}.md`.
+  - Record final review at `.dip/reviews/deep-review-{slug}.md`.
   - Remove transient state in `.dip/state/autopilot-state.json`.
   - Present final summary to user:
     - Confirmed requirements and specs
